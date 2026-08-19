@@ -6,22 +6,22 @@ on:
       - main
   workflow_dispatch:
   schedule:
-    - cron: '17 * * * *' # At 00:00 on Monday
+    - cron: '17 * * * *' # Every hour at 17 minutes past the hour
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repo content
-        uses: actions/checkout@v2
+        uses: actions/checkout@v7
 
       - name: Setup Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v7
         with:
           python-version: '3.10'
 
       - name: Cache Python packages
-        uses: actions/cache@v3
+        uses: actions/cache@v5
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-${{ hashFiles('**/pyproject.toml', '**/uv.lock') }}
