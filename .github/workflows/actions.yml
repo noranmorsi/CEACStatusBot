@@ -6,7 +6,11 @@ on:
       - main
   workflow_dispatch:
   schedule:
-    - cron: '17 * * * *' # Every hour at 17 minutes past the hour
+    - cron: '17 * * * *'
+
+permissions:
+  contents: read
+  actions: read
 
 jobs:
   build:
