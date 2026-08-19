@@ -1,12 +1,16 @@
-name: Daily CEAC update
+name: run main.py
 
 on:
-  schedule:
-    # 5 PM New York = 21:17 UTC during daylight saving time
-    # and 22:17 UTC during standard time.
-    - cron: '17 21 * * *'
-    - cron: '17 22 * * *'
+  push:
+    branches:
+      - main
   workflow_dispatch:
+  schedule:
+    - cron: '17 * * * *'
+
+permissions:
+  contents: read
+  actions: read
 
 jobs:
   daily-update:
