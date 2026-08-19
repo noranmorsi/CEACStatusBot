@@ -12,7 +12,7 @@ from CEACStatusBot import (
 
 # --- Load .env if present, else fallback to system env ---
 if os.path.exists(".env"):
-    load_dotenv(dotenv_path=".env")  # loads into os.environ
+    load_dotenv(dotenv_path=".env")
 else:
     print(".env not found, using system environment only")
 
@@ -20,36 +20,59 @@ else:
 def download_artifact():
     try:
         result = subprocess.run(
-            ["gh", "api", f"repos/{os.environ['GITHUB_REPOSITORY']}/actions/artifacts"],
+            [
+                "gh",
+                "api",
+                f"repos/{os.environ['GITHUB_REPOSITORY']}/actions/artifacts",
+            ],
             capture_output=True,
             text=True,
         )
+
         artifacts = json.loads(result.stdout)
-        artifact_exists = any(artifact["name"] == "status-artifact" for artifact in artifacts["artifacts"])
+
+        artifact_exists = any(
+            artifact["name"] == "status-artifact"
+            for artifact in artifacts["artifacts"]
+        )
 
         if artifact_exists:
-            subprocess.run(["gh", "run", "download", "--name", "status-artifact"], check=True)
+            subprocess.run(
+                ["gh", "run", "download", "--name", "status-artifact"],
+                check=True,
+            )
         else:
             with open("status_record.json", "w") as file:
                 json.dump({"statuses": []}, file)
+
     except Exception as e:
         print(f"Error downloading artifact: {e}")
 
 
-# --- Read env vars with fallback ---
+# --- Read environment variables ---
 GH_TOKEN = os.getenv("GH_TOKEN")
+
 if not GH_TOKEN:
     print("GH_TOKEN not found")
 
 if not os.path.exists("status_record.json"):
     download_artifact()
 
+
+# --- Required CEAC environment variables ---
 try:
     LOCATION = os.environ["LOCATION"]
     NUMBER = os.environ["NUMBER"]
     PASSPORT_NUMBER = os.environ["PASSPORT_NUMBER"]
     SURNAME = os.environ["SURNAME"]
-    notificationManager = NotificationManager(LOCATION, NUMBER, PASSPORT_NUMBER, SURNAME)
+
+    notificationManager = NotificationManager(
+        LOCATION,
+        NUMBER,
+        PASSPORT_NUMBER,
+        SURNAME,
+    )
+
 except KeyError as e:
     raise RuntimeError(f"Missing required env var: {e}") from e
 
@@ -61,7 +84,12 @@ PASSWORD = os.getenv("PASSWORD")
 SMTP = os.getenv("SMTP", "")
 
 if FROM and TO and PASSWORD:
-    emailNotificationHandle = EmailNotificationHandle(FROM, TO, PASSWORD, SMTP)
+    emailNotificationHandle = EmailNotificationHandle(
+        FROM,
+        TO,
+        PASSWORD,
+        SMTP,
+    )
     notificationManager.addHandle(emailNotificationHandle)
 else:
     print("Email notification config missing or incomplete")
@@ -72,11 +100,23 @@ BOT_TOKEN = os.getenv("TG_BOT_TOKEN")
 CHAT_ID = os.getenv("TG_CHAT_ID")
 
 if BOT_TOKEN and CHAT_ID:
-    tgNotif = TelegramNotificationHandle(BOT_TOKEN, CHAT_ID)
+    tgNotif = TelegramNotificationHandle(
+        BOT_TOKEN,
+        CHAT_ID,
+    )
     notificationManager.addHandle(tgNotif)
 else:
     print("Telegram bot notification config missing or incomplete")
 
 
+# --- Daily update mode ---
+# Set FORCE_DAILY_UPDATE=true in the daily GitHub Actions workflow.
+FORCE_DAILY_UPDATE = (
+    os.getenv("FORCE_DAILY_UPDATE", "").lower() == "true"
+)
+
+
 # --- Send notifications ---
-notificationManager.send()
+notificationManager.send(
+    force_daily=FORCE_DAILY_UPDATE
+)
