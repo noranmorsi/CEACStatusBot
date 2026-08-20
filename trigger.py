@@ -1,4 +1,3 @@
-import json
 import os
 
 from dotenv import load_dotenv
@@ -6,7 +5,6 @@ from dotenv import load_dotenv
 from CEACStatusBot import (
     EmailNotificationHandle,
     NotificationManager,
-    TelegramNotificationHandle,
 )
 
 
@@ -71,28 +69,6 @@ if FROM and TO and PASSWORD:
 else:
     print(
         "Email notification config missing or incomplete"
-    )
-
-
-# ------------------------------------------------------------
-# Telegram notifications
-# ------------------------------------------------------------
-
-BOT_TOKEN = os.getenv("TG_BOT_TOKEN")
-CHAT_ID = os.getenv("TG_CHAT_ID")
-
-if BOT_TOKEN and CHAT_ID:
-    tgNotif = TelegramNotificationHandle(
-        BOT_TOKEN,
-        CHAT_ID,
-    )
-
-    notificationManager.addHandle(
-        tgNotif
-    )
-else:
-    print(
-        "Telegram bot notification config missing or incomplete"
     )
 
 
