@@ -1,22 +1,25 @@
-name: run main.py
+name: CEAC Hourly Check
 
 on:
-  push:
-    branches:
-      - main
-  workflow_dispatch:
   schedule:
     - cron: '17 * * * *'
 
+  workflow_dispatch:
+
+  push:
+    branches:
+      - main
+
 permissions:
-  contents: read
-  actions: read
+  contents: write
 
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout repo content
+
+      - name: Checkout repo
         uses: actions/checkout@v7
 
       - name: Setup Python
@@ -37,28 +40,37 @@ jobs:
           python -m pip install --upgrade pip
           pip install uv
 
-      - name: Sync environment with uv
+      - name: Sync environment
         run: uv sync
 
-      - name: Execute py script
+      - name: Run CEAC check
         env:
           LOCATION: ${{ secrets.LOCATION }}
           NUMBER: ${{ secrets.NUMBER }}
           PASSPORT_NUMBER: ${{ secrets.PASSPORT_NUMBER }}
           SURNAME: ${{ secrets.SURNAME }}
-          TIMEZONE: ${{ secrets.TIMEZONE }}
+          TIMEZONE: Africa/Cairo
+
           FROM: ${{ secrets.FROM }}
           TO: ${{ secrets.TO }}
           PASSWORD: ${{ secrets.PASSWORD }}
           SMTP: ${{ secrets.SMTP }}
+
           TG_BOT_TOKEN: ${{ secrets.TG_BOT_TOKEN }}
           TG_CHAT_ID: ${{ secrets.TG_CHAT_ID }}
+
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
-          GITHUB_REPOSITORY: ${{ github.repository }}
+
         run: uv run trigger.py
 
-      - name: Upload status artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: status-artifact
-          path: status_record.json
+      - name: Commit updated status
+        run: |
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add status_record.json
+
+          git diff --cached --quiet || git commit -m "Update CEAC status record"
+
+          git push
