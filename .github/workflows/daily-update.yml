@@ -1,23 +1,23 @@
-name: run main.py
+name: CEAC Daily Update
 
 on:
-  push:
-    branches:
-      - main
-  workflow_dispatch:
   schedule:
-    - cron: '17 * * * *'
+    # 5:00 PM Cairo
+    # Cairo is UTC+3 in August
+    - cron: '0 14 * * *'
+
+  workflow_dispatch:
 
 permissions:
-  contents: read
-  actions: read
+  contents: write
 
 jobs:
-  daily-update:
+  build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repo content
+
+      - name: Checkout repo
         uses: actions/checkout@v7
 
       - name: Setup Python
@@ -38,23 +38,39 @@ jobs:
           python -m pip install --upgrade pip
           pip install uv
 
-      - name: Sync environment with uv
+      - name: Sync environment
         run: uv sync
 
-      - name: Execute daily CEAC check
+      - name: Run daily CEAC check
         env:
           LOCATION: ${{ secrets.LOCATION }}
           NUMBER: ${{ secrets.NUMBER }}
           PASSPORT_NUMBER: ${{ secrets.PASSPORT_NUMBER }}
           SURNAME: ${{ secrets.SURNAME }}
-          TIMEZONE: ${{ secrets.TIMEZONE }}
+          TIMEZONE: Africa/Cairo
+
           FROM: ${{ secrets.FROM }}
           TO: ${{ secrets.TO }}
           PASSWORD: ${{ secrets.PASSWORD }}
           SMTP: ${{ secrets.SMTP }}
+
           TG_BOT_TOKEN: ${{ secrets.TG_BOT_TOKEN }}
           TG_CHAT_ID: ${{ secrets.TG_CHAT_ID }}
+
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
-          GITHUB_REPOSITORY: ${{ github.repository }}
+
           FORCE_DAILY_UPDATE: "true"
+
         run: uv run trigger.py
+
+      - name: Commit updated status
+        run: |
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add status_record.json
+
+          git diff --cached --quiet || git commit -m "Update CEAC status record"
+
+          git push
