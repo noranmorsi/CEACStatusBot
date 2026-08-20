@@ -2,10 +2,7 @@ import os
 
 from dotenv import load_dotenv
 
-from CEACStatusBot import (
-    EmailNotificationHandle,
-    NotificationManager,
-)
+from CEACStatusBot import NotificationManager
 
 
 # ------------------------------------------------------------
@@ -47,39 +44,7 @@ notificationManager = NotificationManager(
 
 
 # ------------------------------------------------------------
-# Email notifications
-# ------------------------------------------------------------
-
-FROM = os.getenv("FROM")
-TO = os.getenv("TO")
-PASSWORD = os.getenv("PASSWORD")
-SMTP = os.getenv("SMTP", "")
-
-if FROM and TO and PASSWORD:
-    emailNotificationHandle = EmailNotificationHandle(
-        FROM,
-        TO,
-        PASSWORD,
-        SMTP,
-    )
-
-    notificationManager.addHandle(
-        emailNotificationHandle
-    )
-else:
-    print(
-        "Email notification config missing or incomplete"
-    )
-
-
-# ------------------------------------------------------------
 # Daily update mode
-#
-# The daily workflow sets:
-#
-# FORCE_DAILY_UPDATE=true
-#
-# The hourly workflow does not set this.
 # ------------------------------------------------------------
 
 FORCE_DAILY_UPDATE = (
@@ -92,7 +57,7 @@ FORCE_DAILY_UPDATE = (
 
 
 # ------------------------------------------------------------
-# Run
+# Run CEAC status check
 # ------------------------------------------------------------
 
 notificationManager.send(
